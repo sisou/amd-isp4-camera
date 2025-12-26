@@ -1,20 +1,28 @@
 # AMD ISP4 Camera Driver
 KVER ?= $(shell uname -r)
 KDIR ?= /lib/modules/$(KVER)/build
-BASE_URL := https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/drivers/media/platform/amd/isp4
+MSG_ID := 20251128091929.165272-1-Bin.Du@amd.com
 
 SRCS := isp4.c isp4_debug.c isp4_interface.c isp4_subdev.c isp4_video.c
 HDRS := isp4.h isp4_debug.h isp4_interface.h isp4_subdev.h isp4_video.h isp4_fw_cmd_resp.h isp4_hw_reg.h
-FILES := $(SRCS) $(HDRS)
 
 obj-m += amd_capture.o
 amd_capture-objs := isp4.o isp4_debug.o isp4_interface.o isp4_subdev.o isp4_video.o
 
-all: $(FILES)
+all: $(SRCS) $(HDRS)
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
-$(FILES):
-	curl -sO $(BASE_URL)/$@
+$(SRCS) $(HDRS): patch
+	@touch $@
+
+patch: .patched
+
+.patched:
+	b4 am -l $(MSG_ID)
+	mkdir -p src && cd src && git init && git am ../v6_*.mbx
+	cp src/drivers/media/platform/amd/isp4/*.c src/drivers/media/platform/amd/isp4/*.h .
+	rm -rf src v6_*.mbx v6_*.cover
+	touch .patched
 
 install:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
@@ -26,6 +34,6 @@ clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
 
 distclean: clean
-	rm -f $(FILES)
+	rm -f $(SRCS) $(HDRS) .patched
 
-.PHONY: all install clean distclean
+.PHONY: all install clean distclean patch
