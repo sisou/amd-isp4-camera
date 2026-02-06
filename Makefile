@@ -1,39 +1,21 @@
 # AMD ISP4 Camera Driver
 KVER ?= $(shell uname -r)
-KDIR ?= /lib/modules/$(KVER)/build
-MSG_ID := 20251128091929.165272-1-Bin.Du@amd.com
+TARGET_DIR := linux-$(KVER)
 
-SRCS := isp4.c isp4_debug.c isp4_interface.c isp4_subdev.c isp4_video.c
-HDRS := isp4.h isp4_debug.h isp4_interface.h isp4_subdev.h isp4_video.h isp4_fw_cmd_resp.h isp4_hw_reg.h
+.PHONY: all install clean setup
 
-obj-m += amd_capture.o
-amd_capture-objs := isp4.o isp4_debug.o isp4_interface.o isp4_subdev.o isp4_video.o
+all: setup
+	$(MAKE) -C $(TARGET_DIR) build
 
-all: $(SRCS) $(HDRS)
-	$(MAKE) -C $(KDIR) M=$(PWD) modules
-
-$(SRCS) $(HDRS): patch
-	@touch $@
-
-patch: .patched
-
-.patched:
-	b4 am -l $(MSG_ID)
-	mkdir -p src && cd src && git init && git am ../v6_*.mbx
-	cp src/drivers/media/platform/amd/isp4/*.c src/drivers/media/platform/amd/isp4/*.h .
-	rm -rf src v6_*.mbx v6_*.cover
-	touch .patched
-
-install:
-	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
-	depmod -a
-	echo "amd_capture" > /etc/modules-load.d/amd-camera.conf
-	modprobe amd_capture
+install: all
+	sudo install -Dm644 $(TARGET_DIR)/amd_capture.ko /lib/modules/$(KVER)/extra/amd_capture.ko
+	sudo depmod -a $(KVER)
+	-sudo modprobe -r amd_capture 2>/dev/null
+	sudo modprobe amd_capture
+	echo "amd_capture" | sudo tee /etc/modules-load.d/amd-camera.conf >/dev/null
 
 clean:
-	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	-$(MAKE) -C $(TARGET_DIR) clean
 
-distclean: clean
-	rm -f $(SRCS) $(HDRS) .patched
-
-.PHONY: all install clean distclean patch
+setup:
+	@./setup.sh $(KVER)

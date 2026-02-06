@@ -2,6 +2,8 @@
 
 Out-of-tree module for the AMD ISP4 camera found in Ryzen AI laptops (e.g., ASUS Zenbook S 16, HP ZBook Ultra G1a).
 
+**Note:** Tested on Arch Linux. Other distros may require adjustments.
+
 The driver is not yet merged into mainline Linux. This repo downloads the [patch series](https://lore.kernel.org/linux-media/20251128091929.165272-1-Bin.Du@amd.com/) via `b4` and builds it as a loadable module.
 
 ## Requirements
@@ -24,14 +26,22 @@ sudo dnf install kernel-devel kernel-headers gcc make b4
 ## Install
 
 ```bash
-make
-sudo make install
+make install
 ```
 
-This downloads the patches, compiles the module, installs it, and configures it to load at boot.
+This downloads the patches, compiles the module, installs it, loads it, and configures it to load at boot.
 
 ## After kernel updates
 
 ```bash
-make clean && make && sudo make install
+make install
+```
+
+Each kernel version gets its own build directory (`linux-<version>/`). Just run `make install` after updating your kernel.
+
+## Verify
+
+```bash
+lsmod | grep amd_capture
+v4l2-ctl --list-devices
 ```

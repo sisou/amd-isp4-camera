@@ -1,0 +1,19 @@
+# Build directories (per-kernel)
+linux-*/
+
+# Kernel module build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.order
+*.symvers
+.*.cmd
+.tmp_versions/
+
+# b4 downloads
+*.mbx
+*.cover
+
+# Temporary source extraction
+src/
